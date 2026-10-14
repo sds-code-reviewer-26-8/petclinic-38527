@@ -7,6 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional(readOnly = true)
@@ -20,6 +21,14 @@ public class OwnerService {
 
     public List<Owner> findOwners() {
         return ownerRepository.findAll();
+    }
+
+    public List<Owner> findOwnersByLastName(String lastName) {
+        String lowercaseLastname = lastName.toLowerCase();
+        List<Owner> allOwners = ownerRepository.findAll();
+        return allOwners.stream()
+                .filter(owner -> owner.getLastName().toLowerCase().startsWith(lowercaseLastname))
+                .collect(Collectors.toList());
     }
 
     public Owner findOwner(Long ownerId) {
