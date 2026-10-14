@@ -8,6 +8,7 @@ import com.example.petclinic.service.PetService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -24,27 +25,39 @@ public class PetController {
         }
 
         @GetMapping
-        public List<PetDto> list() {
-                return petService.findPets().stream()
-                                .map(p -> {
-                                        PetTypeDto petType = new PetTypeDto(
-                                                        p.getType().getId(),
-                                                        p.getType().getName());
-                                        OwnerDto owner = new OwnerDto(
-                                                        p.getOwner().getId(),
-                                                        p.getOwner().getFirstName(),
-                                                        p.getOwner().getLastName(),
-                                                        p.getOwner().getAddress(),
-                                                        p.getOwner().getCity(),
-                                                        p.getOwner().getTelephone());
-                                        return new PetDto(
-                                                        p.getId(),
-                                                        p.getName(),
-                                                        p.getBirthDate(),
-                                                        petType,
-                                                        owner);
-                                })
+        public List<PetDto> list(
+                        @RequestParam(value = "year", defaultValue = "") String year,
+                        @RequestParam(value = "type", defaultValue = "") String type) {
+                if (year.isEmpty() && type.isEmpty()) {
+                        return petService.findPets().stream()
+                                        .map(this::toDto)
+                                        .collect(Collectors.toList());
+                }
+                if (year.isEmpty() || type.isEmpty()) {
+                        throw new IllegalArgumentException("year or type parameter is required.");
+                }
+                return petService.findPetsByYearAndType(Long.parseLong(year), type).stream()
+                                .map(this::toDto)
                                 .collect(Collectors.toList());
+        }
+
+        private PetDto toDto(Pet p) {
+                PetTypeDto petType = new PetTypeDto(
+                                p.getType().getId(),
+                                p.getType().getName());
+                OwnerDto owner = new OwnerDto(
+                                p.getOwner().getId(),
+                                p.getOwner().getFirstName(),
+                                p.getOwner().getLastName(),
+                                p.getOwner().getAddress(),
+                                p.getOwner().getCity(),
+                                p.getOwner().getTelephone());
+                return new PetDto(
+                                p.getId(),
+                                p.getName(),
+                                p.getBirthDate(),
+                                petType,
+                                owner);
         }
 
         @GetMapping("/{id}")
